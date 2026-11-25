@@ -61,5 +61,33 @@ namespace TestProject1.Services
             Assert.IsNotNull(result);
             Assert.AreEqual("Cat is not yours", result.Value);
         }
+        [TestMethod]
+        public async Task Delete_TooCute()
+        {
+            Mock<CatsService> serviceMock = new Mock<CatsService>();
+            Mock<CatsController> controller = new Mock<CatsController>(serviceMock.Object) { CallBase = true };
+
+            CatOwner co = new CatOwner()
+            {
+                Id = "11111"
+            };
+            Cat c = new Cat()
+            {
+                Id = 1,
+                Name = "Tite Dali",
+                CatOwner = co,
+                CuteLevel = Cuteness.Amazing
+            };
+
+            serviceMock.Setup(s => s.Get(It.IsAny<int>())).Returns(c);
+            controller.Setup(c => c.UserId).Returns("11111");
+
+            var actionResult = controller.Object.DeleteCat(0);
+
+            var result = actionResult.Result as BadRequestObjectResult;
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("Cat is not yours", result.Value);
+        }
     }
 }
