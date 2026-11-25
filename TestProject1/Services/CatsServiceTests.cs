@@ -1,0 +1,65 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using mock.depart.Controllers;
+using mock.depart.Models;
+using mock.depart.Services;
+using mock.Exceptions;
+using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TestProject1.Services
+{
+    [TestClass]
+    public sealed class CatsServiceTests
+    {
+        [TestMethod]
+        public async Task Delete_CatNotFound()
+        {
+            Mock<CatsService> serviceMock = new Mock<CatsService>();
+            Mock<CatsController> controller = new Mock<CatsController>(serviceMock.Object) { CallBase = true };
+
+            serviceMock.Setup(s => s.Get(It.IsAny<int>())).Returns(value: null);
+
+            controller.Setup(c => c.UserId).Returns("1");
+
+            var actionResult = controller.Object.DeleteCat(0);
+
+            var result = actionResult.Result as NotFoundResult;
+
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task Delete_WrongOwner()
+        {
+            Mock<CatsService> serviceMock = new Mock<CatsService>();
+            Mock<CatsController> controller = new Mock<CatsController>(serviceMock.Object) { CallBase = true };
+
+            CatOwner co = new CatOwner()
+            {
+                Id = "11111"
+            };
+            Cat c = new Cat()
+            {
+                Id = 1,
+                Name = "Tite Dali",
+                CatOwner = co,
+                CuteLevel = Cuteness.Amazing
+            };
+
+            serviceMock.Setup(s => s.Get(It.IsAny<int>())).Returns(c);
+            controller.Setup(c => c.UserId).Returns("1");
+
+            var actionResult = controller.Object.DeleteCat(0);
+
+            var result = actionResult.Result as BadRequestObjectResult;
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual("Cat is not yours", result.Value);
+        }
+    }
+}
